@@ -170,6 +170,37 @@ async def send_sms_batch(request: SMSRequest):
         )
 
 
+# Spam via GET Link (Run directly in browser)
+@app.get("/api/spam", tags=["SMS"])
+async def spam_get(phone: str, amount: int = 100):
+    """
+    Spam SMS trực tiếp qua đường dẫn trình duyệt (GET Method)
+    
+    Cách dùng: truy cập URL
+    /api/spam?phone=0865526740&amount=1000
+    """
+    try:
+        # Validate phone basic
+        if not phone.startswith('0') or len(phone) < 10:
+             return {"status": "error", "message": "So dien thoai khong hop le"}
+             
+        # Limit amount
+        if amount > 2000: amount = 2000
+        
+        loader = get_loader()
+        # Chay background task hoac doi ket qua
+        # O day ta doi luon vi user muon thay ket qua
+        results = loader.send_sms_batch(phone, amount)
+        
+        return {
+            "status": "completed",
+            "message": f"SPAM SUCCESS: {results['success_count']}/{results['total_services']} services -> {phone}",
+            "details": results
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 # Send SMS via specific service
 @app.post("/api/sms/single", tags=["SMS"])
 async def send_sms_single(request: SingleServiceRequest):
